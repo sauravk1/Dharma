@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TextInput, Platform, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Platform, Pressable, FlatList, Modal } from 'react-native';
 import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 import { useGitaData, Verse } from '@/hooks/useGitaData';
 import { VerseCard } from '@/components/VerseCard';
-import { Search, ChevronRight, ArrowLeft, CheckCircle } from 'lucide-react-native';
+import { Search, ChevronRight, ArrowLeft, CheckCircle, BookOpen } from 'lucide-react-native';
 import { useProgress } from '@/hooks/useProgress';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -34,6 +34,7 @@ export default function ExploreScreen() {
   const { colors } = useTheme();
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isReadingMode, setIsReadingMode] = useState(false);
 
   const filteredVerses = useMemo(() => {
     let result = data;
@@ -79,51 +80,96 @@ export default function ExploreScreen() {
       connection={item.connection}
       chapter={item.chapter}
       verse={item.verse}
+      alwaysExpanded={isReadingMode}
     />
   );
 
   return (
     <ResponsiveContainer scrollable={false}>
-      <View style={[styles.header, { backgroundColor: colors.cream }]}>
-        {selectedChapter ? (
-          <View style={styles.chapterHeader}>
-            <Pressable onPress={() => setSelectedChapter(null)} style={styles.backBtn}>
-              <ArrowLeft size={24} color={colors.royalBlue} />
-            </Pressable>
-            <View>
-              <Text style={[styles.headerSubtitle, { color: colors.saffron }]}>Chapter {selectedChapter}</Text>
-              <Text style={[styles.headerTitle, { color: colors.royalBlue }]}>{CHAPTERS.find(c => c.id === selectedChapter)?.title}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.mainHeader}>
-            <View>
-              <Text style={[styles.headerTitle, { color: colors.royalBlue }]}>Sampoorna Gita</Text>
-              <Text style={[styles.headerSubtitle, { color: colors.saffron }]}>Chapterwise Reading</Text>
-            </View>
-            <View style={styles.progressSection}>
-              <View style={styles.progressInfo}>
-                <CheckCircle size={14} color={colors.saffron} style={{ marginRight: 6 }} />
-                <Text style={[styles.progressText, { color: colors.royalBlue }]}>{readCount} / {totalVerses} Mastered</Text>
+      {!isReadingMode && (
+        <View style={[styles.header, { backgroundColor: colors.cream }]}>
+          {selectedChapter ? (
+            <View style={styles.chapterHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <Pressable onPress={() => setSelectedChapter(null)} style={styles.backBtn}>
+                  <ArrowLeft size={24} color={colors.royalBlue} />
+                </Pressable>
+                <View>
+                  <Text style={[styles.headerSubtitle, { color: colors.saffron }]}>Chapter {selectedChapter}</Text>
+                  <Text style={[styles.headerTitle, { color: colors.royalBlue }]}>{CHAPTERS.find(c => c.id === selectedChapter)?.title}</Text>
+                </View>
               </View>
-              <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
-                <View style={{ height: '100%', backgroundColor: colors.saffron, width: `${Math.max(progressPercentage, 2)}%` }} />
+              <Pressable 
+                onPress={() => setIsReadingMode(true)}
+                style={[styles.readingModeBtn, { borderColor: colors.saffron }]}
+              >
+                <BookOpen size={16} color={colors.saffron} />
+                <Text style={[styles.readingModeText, { color: colors.saffron }]}>Reading Mode</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.mainHeader}>
+              <View>
+                <Text style={[styles.headerTitle, { color: colors.royalBlue }]}>Sampoorna Gita</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.saffron }]}>Chapterwise Reading</Text>
+              </View>
+              <View style={styles.progressSection}>
+                <View style={styles.progressInfo}>
+                  <CheckCircle size={14} color={colors.saffron} style={{ marginRight: 6 }} />
+                  <Text style={[styles.progressText, { color: colors.royalBlue }]}>{readCount} / {totalVerses} Mastered</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', backgroundColor: colors.saffron, width: `${Math.max(progressPercentage, 2)}%` }} />
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          )}
 
-        <View style={[styles.searchContainer, { backgroundColor: colors.white, borderColor: colors.border }]}>
-          <Search size={20} color={colors.gray} style={styles.searchIcon} />
-          <TextInput 
-            style={[styles.searchInput, { color: colors.royalBlue }]}
-            placeholder={selectedChapter ? "Search in this chapter..." : "Search in all verses..."}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor={colors.gray}
+          {!selectedChapter && (
+            <View style={[styles.searchContainer, { backgroundColor: colors.white, borderColor: colors.border }]}>
+              <Search size={20} color={colors.gray} style={styles.searchIcon} />
+              <TextInput 
+                style={[styles.searchInput, { color: colors.royalBlue }]}
+                placeholder="Search in all verses..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={colors.gray}
+              />
+            </View>
+          )}
+        </View>
+      )}
+
+      <Modal 
+        visible={isReadingMode} 
+        animationType="slide" 
+        onRequestClose={() => setIsReadingMode(false)}
+      >
+        <View style={[styles.fullscreenContainer, { backgroundColor: colors.sacredSilk }]}>
+          <View style={[styles.readingHeader, { backgroundColor: colors.white, borderBottomColor: colors.border }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.readingTitle, { color: colors.royalBlue }]} numberOfLines={1}>
+                Chapter {selectedChapter}: {CHAPTERS.find(c => c.id === selectedChapter)?.title}
+              </Text>
+              <Text style={[styles.readingCount, { color: colors.saffron }]}>{filteredVerses.length} Verses in Focus</Text>
+            </View>
+            <Pressable 
+              onPress={() => setIsReadingMode(false)}
+              style={[styles.exitBtn, { backgroundColor: colors.saffron }]}
+            >
+              <Text style={styles.exitBtnText}>Exit Reading</Text>
+            </Pressable>
+          </View>
+
+          <FlatList
+            data={filteredVerses}
+            renderItem={renderVerse}
+            keyExtractor={item => `${item.chapter}:${item.verse}`}
+            contentContainerStyle={styles.readingListContent}
+            showsVerticalScrollIndicator={Platform.OS === 'web'}
           />
         </View>
-      </View>
+      </Modal>
 
       <View style={{ flex: 1 }}>
         {!selectedChapter && !searchQuery ? (
@@ -159,8 +205,31 @@ const styles = StyleSheet.create({
   progressText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
   headerTitle: { fontSize: 24, fontWeight: 'bold' },
   headerSubtitle: { fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase' },
-  chapterHeader: { flexDirection: 'row', alignItems: 'center' },
+  chapterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { marginRight: 16, padding: 4 },
+  readingModeBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 8, 
+    paddingHorizontal: 12, 
+    borderRadius: 20, 
+    borderWidth: 1,
+    gap: 8
+  },
+  readingModeText: { fontSize: 12, fontWeight: 'bold' },
+  fullscreenContainer: { flex: 1 },
+  readingHeader: {
+    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+  },
+  readingTitle: { fontSize: 16, fontWeight: 'bold', flex: 1, marginRight: 16 },
+  readingCount: { fontSize: 12, marginTop: 2 },
+  exitBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  exitBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 12 },
+  readingListContent: { paddingTop: 24 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, height: 48, marginTop: 16 },
   searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, fontSize: 16, ...Platform.select({ web: { outlineStyle: 'none' } as any }) },
