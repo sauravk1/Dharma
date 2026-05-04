@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.sauravkumar.dharma",
       "adaptiveIcon": {
         "backgroundColor": "#FFFDD0",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

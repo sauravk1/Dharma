@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Share } from 'react-native';
+import { View, Text, StyleSheet, Platform, Share, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Typography } from '@/constants/theme';
-import { Bookmark, BookmarkCheck, CheckCircle, Share2 } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useProgress } from '@/hooks/useProgress';
 import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/context/ThemeContext';
+import { getDivineAdvice } from '@/utils/wisdom';
 
 interface VerseCardProps {
   shloka: string;
@@ -19,50 +20,48 @@ interface VerseCardProps {
 }
 
 export const VerseCard: React.FC<VerseCardProps> = ({ 
-  shloka, translation, english, connection, chapter, verse, alwaysExpanded = false 
+  shloka, 
+  translation, 
+  english, 
+  connection: originalConnection, 
+  chapter, 
+  verse, 
+  alwaysExpanded = false 
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(alwaysExpanded);
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { readVerses, toggleProgress } = useProgress();
   const { fontSize } = useSettings();
   const { colors } = useTheme();
+
+  // Use the wisdom engine to generate bilingual advice
+  const advice = React.useMemo(() => {
+    return getDivineAdvice({ shloka, translation, english, connection: originalConnection, chapter, verse, mood: '' });
+  }, [shloka, translation, english, originalConnection, chapter, verse]);
+
   const verseId = `${chapter}:${verse}`;
   const bookmarked = isBookmarked(verseId);
   const isRead = readVerses.includes(verseId);
-
-  React.useEffect(() => {
-    if (alwaysExpanded) setIsExpanded(true);
-  }, [alwaysExpanded]);
 
   const handleExpand = () => {
     if (alwaysExpanded) return;
     const nextState = !isExpanded;
     setIsExpanded(nextState);
-    if (nextState && !isRead) {
-      toggleProgress(verseId);
+    if (nextState && Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
-  const handleMarkRead = (e: any) => {
-    e.stopPropagation();
+  const handleMarkRead = () => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     toggleProgress(verseId);
   };
 
-  const handleBookmark = (e: any) => {
-    e.stopPropagation();
+  const handleShare = async () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    toggleBookmark(verseId);
-  };
-
-  const handleShare = async (e: any) => {
-    e.stopPropagation();
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
     }
     try {
       const shareMessage = 
@@ -70,9 +69,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
         `📖 *Chapter ${chapter}, Verse ${verse}*\n\n` +
         `🕉️ *Shloka:*\n${shloka}\n\n` +
         `📝 *English:*\n${english}\n\n` +
-        `🇮🇳 *Hindi Translation:*\n${translation}\n\n` +
-        `🙏 *Krishna's Advice:*\n${connection}\n\n` +
-        `— Shared via *Dharma App* 🪷`;
+        `🇮🇳 *Hindi:*\n${translation}\n\n` +
+        `🙏 *Krishna's Advice (Hindi):*\n${advice.hindi}\n\n` +
+        `🇬🇧 *Advice (English):*\n${advice.english}\n\n` +
+        `— Shared via Dharma App 🪷`;
 
       await Share.share({
         message: shareMessage,
@@ -82,63 +82,94 @@ export const VerseCard: React.FC<VerseCardProps> = ({
   };
 
   return (
-    <View style={[
-      styles.card, 
-      { backgroundColor: colors.white, borderColor: colors.border },
-      alwaysExpanded && [styles.cardFlat, { borderColor: colors.saffron + '44' }]
-    ]}>
-      <View style={styles.cardHeader}>
-        <Text style={[styles.meta, { color: colors.gray }]}>Chapter {chapter}, Verse {verse}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Pressable onPress={handleShare} style={styles.readBtn}>
-            <Share2 size={18} color={colors.gray} />
-          </Pressable>
-          <Pressable onPress={handleMarkRead} style={styles.readBtn}>
-            <CheckCircle 
-              size={20} 
-              color={isRead ? '#4CAF50' : colors.gray} 
-              fill={isRead ? '#4CAF50' : 'transparent'} 
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={styles.header}>
+        <Text style={[styles.verseNumber, { color: colors.primary }]}>
+          Verse {chapter}.{verse}
+        </Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => toggleBookmark(verseId)} style={styles.iconButton}>
+            <Ionicons 
+              name={bookmarked ? "bookmark" : "bookmark-outline"} 
+              size={22} 
+              color={bookmarked ? "#FF9500" : colors.textSecondary} 
             />
-          </Pressable>
-          <Pressable onPress={handleBookmark} style={styles.bookmarkBtn}>
-            {bookmarked ? (
-              <BookmarkCheck size={20} color={colors.saffron} fill={colors.saffron} />
-            ) : (
-              <Bookmark size={20} color={colors.gray} />
-            )}
-          </Pressable>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleShare} style={styles.iconButton}>
+            <Ionicons name="share-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </View>
-      <Text style={[styles.shloka, { color: colors.royalBlue, fontSize: fontSize + 2 }]}>{shloka}</Text>
-      <View style={[styles.divider, { backgroundColor: colors.saffron }]} />
-      
-      <Text style={[styles.hinglish, { color: colors.royalBlue, fontSize: fontSize + 1 }]}>{english}</Text>
-      
-      {isExpanded && (
-        <View style={styles.expandedContent}>
-          <Text style={[styles.hindiTitle, { color: colors.saffron }]}>Hindi Translation</Text>
-          <Text style={[styles.translation, { color: colors.text, fontSize: fontSize }]}>{translation}</Text>
-          
-          <View style={[styles.connectionSection, { borderTopColor: colors.border }]}>
-            <Text style={[styles.connectionTitle, { color: colors.saffron }]}>Krishna's Advice</Text>
-            <Text style={[styles.connectionText, { color: colors.text, fontSize: fontSize - 1 }]}>{connection}</Text>
-          </View>
-        </View>
-      )}
+
+      <View style={styles.shlokaContainer}>
+        <Text style={[styles.shlokaText, { color: colors.primary, fontSize: fontSize + 2 }]}>
+          {shloka}
+        </Text>
+      </View>
 
       {!alwaysExpanded && (
-        <Pressable 
+        <TouchableOpacity 
+          style={styles.expandButton}
           onPress={handleExpand}
-          style={({ hovered }) => [
-            styles.expandButton,
-            { backgroundColor: colors.lightGray },
-            hovered && Platform.OS === 'web' && { backgroundColor: colors.border }
-          ]}
         >
-          <Text style={[styles.expandButtonText, { color: colors.royalBlue }]}>
-            {isExpanded ? 'Hide Details' : 'Explore More'}
+          <Text style={[styles.expandButtonText, { color: colors.primary }]}>
+            {isExpanded ? "Show Less" : "Read Translation & Advice"}
           </Text>
-        </Pressable>
+          <Ionicons 
+            name={isExpanded ? "chevron-up" : "chevron-down"} 
+            size={16} 
+            color={colors.primary} 
+          />
+        </TouchableOpacity>
+      )}
+
+      {(isExpanded || alwaysExpanded) && (
+        <Animated.View entering={FadeInDown.duration(400)}>
+          <View style={styles.contentSection}>
+            <Text style={styles.sectionLabel}>English Meaning</Text>
+            <Text style={[styles.meaningText, { color: colors.text, fontSize: fontSize }]}>
+              {english}
+            </Text>
+          </View>
+
+          <View style={styles.contentSection}>
+            <Text style={styles.sectionLabel}>Hindi Anuvadan</Text>
+            <Text style={[styles.meaningText, { color: colors.text, fontSize: fontSize }]}>
+              {translation}
+            </Text>
+          </View>
+
+          <View style={[styles.adviceCard, { backgroundColor: colors.primary + '15' }]}>
+            <View style={styles.adviceHeader}>
+              <Ionicons name="sparkles" size={18} color={colors.primary} />
+              <Text style={[styles.adviceTitle, { color: colors.primary }]}>Krishna's Advice</Text>
+            </View>
+            
+            <Text style={[styles.adviceTextHi, { color: colors.text, fontSize: fontSize + 1 }]}>
+              {advice.hindi}
+            </Text>
+            
+            <View style={[styles.adviceDivider, { backgroundColor: colors.primary + '30' }]} />
+            
+            <Text style={[styles.adviceTextEn, { color: colors.text, fontSize: fontSize }]}>
+              {advice.english}
+            </Text>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.readButton, isRead ? styles.readButtonActive : { backgroundColor: colors.primary }]}
+            onPress={handleMarkRead}
+          >
+            <Ionicons 
+              name={isRead ? "checkmark-circle" : "checkmark-circle-outline"} 
+              size={20} 
+              color="white" 
+            />
+            <Text style={styles.readButtonText}>
+              {isRead ? "Completed" : "Mark as Read"}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
       )}
     </View>
   );
@@ -146,90 +177,116 @@ export const VerseCard: React.FC<VerseCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 20,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  cardFlat: {
-    shadowOpacity: 0,
-    elevation: 0,
-    borderWidth: 1.5,
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 12,
-  },
-  cardHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 15,
   },
-  bookmarkBtn: { padding: 6, marginLeft: 4 },
-  readBtn: { padding: 6, marginRight: 4 },
-  meta: { fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase' },
-  shloka: {
-    fontSize: 18,
-    lineHeight: 28,
-    textAlign: 'center',
-    fontStyle: Typography.sanskrit.fontStyle,
-    marginBottom: 12,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    width: '40%',
-    alignSelf: 'center',
-    marginVertical: 12,
-    opacity: 0.3,
-  },
-  translation: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontFamily: Typography.hinglish.fontFamily,
-  },
-  hinglish: {
-    fontSize: 17,
-    lineHeight: 26,
-    fontWeight: '500',
-    fontStyle: 'italic',
-  },
-  hindiTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  verseNumber: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  connectionSection: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
+  headerActions: {
+    flexDirection: 'row',
   },
-  expandedContent: { marginTop: 16 },
-  connectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  iconButton: {
+    padding: 8,
+    marginLeft: 8,
   },
-  connectionText: {
-    fontSize: 15,
-    lineHeight: 22,
-    fontStyle: 'italic',
+  shlokaContainer: {
+    marginBottom: 15,
+  },
+  shlokaText: {
+    textAlign: 'center',
+    fontWeight: '600',
+    lineHeight: 32,
   },
   expandButton: {
-    marginTop: 16,
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    marginTop: 10,
   },
   expandButtonText: {
+    fontSize: 14,
     fontWeight: '600',
-    fontSize: 13,
+    marginRight: 5,
+  },
+  contentSection: {
+    marginTop: 20,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#999',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  meaningText: {
+    lineHeight: 24,
+  },
+  adviceCard: {
+    marginTop: 25,
+    padding: 18,
+    borderRadius: 16,
+  },
+  adviceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  adviceTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  adviceTextHi: {
+    lineHeight: 26,
+    fontWeight: '600',
+  },
+  adviceDivider: {
+    height: 1,
+    marginVertical: 12,
+  },
+  adviceTextEn: {
+    lineHeight: 22,
+    fontStyle: 'italic',
+    opacity: 0.85,
+  },
+  readButton: {
+    marginTop: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  readButtonActive: {
+    backgroundColor: '#4CAF50',
+  },
+  readButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 8,
   },
 });
