@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Share } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Typography } from '@/constants/theme';
-import { Bookmark, BookmarkCheck, CheckCircle } from 'lucide-react-native';
+import { Bookmark, BookmarkCheck, CheckCircle, Share2 } from 'lucide-react-native';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useProgress } from '@/hooks/useProgress';
+import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/context/ThemeContext';
 
 interface VerseCardProps {
@@ -22,6 +24,7 @@ export const VerseCard: React.FC<VerseCardProps> = ({
   const [isExpanded, setIsExpanded] = React.useState(alwaysExpanded);
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { readVerses, toggleProgress } = useProgress();
+  const { fontSize } = useSettings();
   const { colors } = useTheme();
   const verseId = `${chapter}:${verse}`;
   const bookmarked = isBookmarked(verseId);
@@ -42,7 +45,40 @@ export const VerseCard: React.FC<VerseCardProps> = ({
 
   const handleMarkRead = (e: any) => {
     e.stopPropagation();
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     toggleProgress(verseId);
+  };
+
+  const handleBookmark = (e: any) => {
+    e.stopPropagation();
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    toggleBookmark(verseId);
+  };
+
+  const handleShare = async (e: any) => {
+    e.stopPropagation();
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    try {
+      const shareMessage = 
+        `✨ *Srimad Bhagavad Gita* ✨\n` +
+        `📖 *Chapter ${chapter}, Verse ${verse}*\n\n` +
+        `🕉️ *Shloka:*\n${shloka}\n\n` +
+        `📝 *English:*\n${english}\n\n` +
+        `🇮🇳 *Hindi Translation:*\n${translation}\n\n` +
+        `🙏 *Krishna's Advice:*\n${connection}\n\n` +
+        `— Shared via *Dharma App* 🪷`;
+
+      await Share.share({
+        message: shareMessage,
+        title: `Gita ${chapter}:${verse}`,
+      });
+    } catch (e) {}
   };
 
   return (
@@ -54,6 +90,9 @@ export const VerseCard: React.FC<VerseCardProps> = ({
       <View style={styles.cardHeader}>
         <Text style={[styles.meta, { color: colors.gray }]}>Chapter {chapter}, Verse {verse}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable onPress={handleShare} style={styles.readBtn}>
+            <Share2 size={18} color={colors.gray} />
+          </Pressable>
           <Pressable onPress={handleMarkRead} style={styles.readBtn}>
             <CheckCircle 
               size={20} 
@@ -61,7 +100,7 @@ export const VerseCard: React.FC<VerseCardProps> = ({
               fill={isRead ? '#4CAF50' : 'transparent'} 
             />
           </Pressable>
-          <Pressable onPress={() => toggleBookmark(verseId)} style={styles.bookmarkBtn}>
+          <Pressable onPress={handleBookmark} style={styles.bookmarkBtn}>
             {bookmarked ? (
               <BookmarkCheck size={20} color={colors.saffron} fill={colors.saffron} />
             ) : (
@@ -70,19 +109,19 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           </Pressable>
         </View>
       </View>
-      <Text style={[styles.shloka, { color: colors.royalBlue }]}>{shloka}</Text>
+      <Text style={[styles.shloka, { color: colors.royalBlue, fontSize: fontSize + 2 }]}>{shloka}</Text>
       <View style={[styles.divider, { backgroundColor: colors.saffron }]} />
       
-      <Text style={[styles.hinglish, { color: colors.royalBlue }]}>{english}</Text>
+      <Text style={[styles.hinglish, { color: colors.royalBlue, fontSize: fontSize + 1 }]}>{english}</Text>
       
       {isExpanded && (
         <View style={styles.expandedContent}>
           <Text style={[styles.hindiTitle, { color: colors.saffron }]}>Hindi Translation</Text>
-          <Text style={[styles.translation, { color: colors.text }]}>{translation}</Text>
+          <Text style={[styles.translation, { color: colors.text, fontSize: fontSize }]}>{translation}</Text>
           
           <View style={[styles.connectionSection, { borderTopColor: colors.border }]}>
             <Text style={[styles.connectionTitle, { color: colors.saffron }]}>Krishna's Advice</Text>
-            <Text style={[styles.connectionText, { color: colors.text }]}>{connection}</Text>
+            <Text style={[styles.connectionText, { color: colors.text, fontSize: fontSize - 1 }]}>{connection}</Text>
           </View>
         </View>
       )}

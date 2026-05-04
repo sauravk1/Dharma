@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { Sparkles } from 'lucide-react-native';
 
 interface ChatBubbleProps {
   message: string;
@@ -12,13 +13,25 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isKrishna = tru
 
   return (
     <View style={[styles.container, isKrishna ? styles.krishnaContainer : styles.userContainer]}>
-      {isKrishna && <Text style={[styles.sender, { color: colors.saffron }]}>Krishna</Text>}
+      {isKrishna && (
+        <View style={styles.avatarRow}>
+          <View style={[styles.avatarCircle, { backgroundColor: colors.saffron }]}>
+            <Text style={{ fontSize: 16 }}>🪶</Text>
+          </View>
+          <Text style={[styles.sender, { color: colors.saffron }]}>Krishna Ji</Text>
+        </View>
+      )}
       <View style={[
         styles.bubble, 
-        isKrishna ? [styles.krishnaBubble, { backgroundColor: colors.white, borderColor: colors.saffron + '33' }] : [styles.userBubble, { backgroundColor: colors.royalBlue }]
+        isKrishna 
+          ? [styles.krishnaBubble, { backgroundColor: colors.white, borderColor: colors.saffron + '33' }] 
+          : [styles.userBubble, { backgroundColor: colors.royalBlue }]
       ]}>
+        {isKrishna && (
+          <Sparkles size={12} color={colors.saffron} style={styles.sparkleIcon} />
+        )}
         <Text style={[styles.text, isKrishna ? { color: colors.royalBlue } : { color: '#FFF' }]}>
-          {isKrishna ? `Dost, Krishna kehte hain... \n\n${message}` : message}
+          {message}
         </Text>
       </View>
     </View>
@@ -27,29 +40,50 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isKrishna = tru
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
-    maxWidth: '92%',
+    marginVertical: 8,
+    maxWidth: '85%',
   },
   krishnaContainer: {
     alignSelf: 'flex-start',
+    paddingLeft: 10,
   },
   userContainer: {
     alignSelf: 'flex-end',
+    paddingRight: 10,
   },
-  sender: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginLeft: 12,
-    marginBottom: 4,
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    marginLeft: 2,
   },
-  bubble: {
-    padding: 16,
-    borderRadius: 20,
+  avatarCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
+    elevation: 2,
+  },
+  sender: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  bubble: {
+    padding: 14,
+    borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
     elevation: 1,
+    position: 'relative',
   },
   krishnaBubble: {
     borderTopLeftRadius: 4,
@@ -58,8 +92,13 @@ const styles = StyleSheet.create({
   userBubble: {
     borderTopRightRadius: 4,
   },
+  sparkleIcon: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+  },
   text: {
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
   },
 });

@@ -4,6 +4,7 @@ import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 import { useGitaData } from '@/hooks/useGitaData';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { VerseCard } from '@/components/VerseCard';
+import { AdBanner } from '@/components/AdBanner';
 import { Bookmark } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -39,6 +40,7 @@ export default function BookmarksScreen() {
             )}
             keyExtractor={item => `${item.chapter}:${item.verse}`}
             contentContainerStyle={styles.listContent}
+            ListFooterComponent={<AdBanner />}
           />
         ) : (
           <View style={styles.emptyContainer}>

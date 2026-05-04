@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
 import { ResponsiveContainer } from '@/components/ResponsiveContainer';
-import { Mail, User, Info, MessageCircle, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { ExternalLink, Info, Mail, MessageCircle, User } from 'lucide-react-native';
+import React from 'react';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function AboutScreen() {
   const { colors } = useTheme();
@@ -18,15 +18,15 @@ export default function AboutScreen() {
           <View style={[styles.avatarPlaceholder, { backgroundColor: colors.royalBlue, borderColor: colors.cream }]}>
             <User size={40} color="#FFF" />
           </View>
-          
+
           <Text style={[styles.name, { color: colors.royalBlue }]}>Saurav Kumar</Text>
-          
+
           <Text style={[styles.bio, { color: colors.gray }]}>
             Expert architecting universal bridges between the depth of ancient wisdom and the precision of modern technology.
           </Text>
 
           <View style={styles.socialGrid}>
-            <Pressable 
+            <Pressable
               onPress={() => openLink('mailto:ksaurav325@gmail.com')}
               style={[styles.socialBtn, { backgroundColor: colors.sacredSilk, borderColor: colors.border }]}
             >
@@ -34,7 +34,7 @@ export default function AboutScreen() {
               <Text style={[styles.socialLabel, { color: colors.text }]}>Email</Text>
             </Pressable>
 
-            <Pressable 
+            <Pressable
               onPress={() => openLink('https://www.linkedin.com/in/saurav-kmr?utm_source=share_via&utm_content=profile&utm_medium=member_ios')}
               style={[styles.socialBtn, styles.linkedinBtn, { backgroundColor: colors.sacredSilk }]}
             >
@@ -42,7 +42,7 @@ export default function AboutScreen() {
               <Text style={[styles.socialLabel, { color: '#0077B5' }]}>LinkedIn</Text>
             </Pressable>
 
-            <Pressable 
+            <Pressable
               onPress={() => openLink('https://www.instagram.com/chauhan__saurav?igsh=MTJicTB1OXJ5cHdjNg%3D%3D&utm_source=qr')}
               style={[styles.socialBtn, { backgroundColor: colors.sacredSilk, borderColor: colors.border }]}
             >
@@ -60,7 +60,7 @@ export default function AboutScreen() {
           </View>
           <View style={[styles.visionCard, { backgroundColor: colors.white, borderLeftColor: colors.saffron }]}>
             <Text style={[styles.visionText, { color: colors.text }]}>
-              Dharma was built with a vision to make the sacred wisdom of the Bhagavad Gita accessible to everyone, everywhere. 
+              Dharma is built with a vision to make the sacred wisdom of the Bhagavad Gita accessible to everyone, everywhere.
               By combining high-performance technology with timeless spiritual insights, we aim to provide a guiding light in the modern world.
             </Text>
           </View>
@@ -99,11 +99,11 @@ const styles = StyleSheet.create({
   },
   name: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   bio: { fontSize: 16, textAlign: 'center', lineHeight: 24, marginBottom: 30, fontStyle: 'italic' },
-  socialGrid: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    justifyContent: 'center', 
-    gap: 12 
+  socialGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12
   },
   socialBtn: {
     flexDirection: 'row',
@@ -120,10 +120,10 @@ const styles = StyleSheet.create({
   section: { marginTop: 40 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
-  visionCard: { 
-    padding: 24, 
-    borderRadius: 16, 
-    borderLeftWidth: 4, 
+  visionCard: {
+    padding: 24,
+    borderRadius: 16,
+    borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,

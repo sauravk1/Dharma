@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
 import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 import { useGitaData, Verse } from '@/hooks/useGitaData';
@@ -7,13 +8,14 @@ import { ChatBubble } from '@/components/ChatBubble';
 import { VerseCard } from '@/components/VerseCard';
 import { MoodButton } from '@/components/MoodButton';
 import { useTheme } from '@/context/ThemeContext';
-import { Send, Zap, CloudRain, Flame, HelpCircle as HelpIcon } from 'lucide-react-native';
+import { Send, Zap, CloudRain, Flame, HelpCircle as HelpIcon, BookOpen } from 'lucide-react-native';
 
 interface Message {
   id: string;
   text: string;
   isKrishna: boolean;
   verse?: Verse;
+  showVerse?: boolean;
 }
 
 export default function ChatScreen() {
@@ -22,6 +24,7 @@ export default function ChatScreen() {
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const MOODS = [
@@ -32,7 +35,7 @@ export default function ChatScreen() {
   ];
 
   useEffect(() => {
-    const welcome = "Radhe Radhe! Main Krishna hoon. Bataiye, aaj aap kaisa feel kar rahe hain?";
+    const welcome = "Radhe Radhe, mere priya dost! Main Krishna hoon. Bataiye, aaj aapke mann mein kya chal raha hai?";
     setMessages([{ id: '1', text: welcome, isKrishna: true }]);
 
     if (initialMood) {
@@ -41,58 +44,93 @@ export default function ChatScreen() {
   }, [initialMood]);
 
   const handleMoodSelection = (mood: string) => {
-    const userMsg: Message = { id: Date.now().toString(), text: `Main ${mood} feel kar raha hoon.`, isKrishna: false };
+    const userMsg: Message = { id: Date.now().toString(), text: `Krishna, main thoda ${mood.toLowerCase()} feel kar raha hoon.`, isKrishna: false };
     setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
     
     setTimeout(() => {
+      setIsTyping(false);
       const relevant = getVersesByMood(mood);
       const randomVerse = relevant[Math.floor(Math.random() * relevant.length)];
       setMessages(prev => [...prev, {
         id: Date.now() + 'k',
-        text: `Maine suna. Gita ke is gyan se aapko shanti milegi:`,
+        text: `Mere priya, ghabraiye mat. Gita ka yeh gyan aapke mann ko shanti dega:`,
         isKrishna: true,
-        verse: randomVerse
+        verse: randomVerse,
+        showVerse: false
       }]);
-    }, 1000);
+    }, 1500);
   };
 
   const handleSend = () => {
     if (!inputText.trim()) return;
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     const userMessage: Message = { id: Date.now().toString(), text: inputText, isKrishna: false };
     setMessages(prev => [...prev, userMessage]);
     const currentInput = inputText;
     setInputText('');
+    setIsTyping(true);
 
     setTimeout(() => {
+      setIsTyping(false);
       const lowerInput = currentInput.toLowerCase().trim();
-      const greetings = ['hi', 'hello', 'hey', 'radhe radhe', 'namaste', 'pranam'];
+      const greetings = ['hi', 'hello', 'hey', 'radhe radhe', 'namaste', 'pranam', 'krishna'];
       
       if (greetings.includes(lowerInput) || lowerInput.length < 3) {
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
-          text: "Radhe Radhe! Main Krishna hoon. Bataiye, aaj main aapki kaise sahayata kar sakta hoon? Aap apna haal-chaal bata sakte hain ya koi prashna pooch sakte hain.",
+          text: "Radhe Radhe, mere sakha! Main humesha aapke saath hoon. Bataiye, aaj main aapki kaise sahayata kar sakta hoon?",
           isKrishna: true
         }]);
         return;
       }
 
       const matchedVerse = findBestMatch(currentInput);
-      const advice = matchedVerse?.connection || "Mere dost, jeevan mein humesha dherya rakhein aur karma karte rahein. Har prashna ka uttar samay aane par milta hai.";
+      let advice = matchedVerse?.connection || "Mere priya Parth, jeevan mein humesha dherya rakhein aur apne karma par dhyan dein. Phal ki chinta na karein, main sab dekh raha hoon.";
       
+      // Add a divine touch to the matched advice
+      if (matchedVerse) {
+        advice = `Suno Parth, Gita kehti hai... ${advice}`;
+      }
+
+      const wantsVerse = lowerInput.includes('shloka') || 
+                         lowerInput.includes('verse') || 
+                         lowerInput.includes('dikhao') || 
+                         lowerInput.includes('padhna') || 
+                         lowerInput.includes('gita');
+
       const krishnaMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: advice,
         isKrishna: true,
-        verse: matchedVerse || undefined
+        verse: matchedVerse || undefined,
+        showVerse: wantsVerse
       };
       setMessages(prev => [...prev, krishnaMessage]);
-    }, 1000);
+    }, 2000);
+  };
+
+  const toggleVerse = (id: string) => {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, showVerse: !m.showVerse } : m));
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
     <View style={styles.messageWrapper}>
       <ChatBubble message={item.text} isKrishna={item.isKrishna} />
-      {item.verse && (
+      
+      {item.verse && !item.showVerse && (
+        <Pressable 
+          onPress={() => toggleVerse(item.id)}
+          style={[styles.viewVerseBtn, { borderColor: colors.saffron }]}
+        >
+          <BookOpen size={14} color={colors.saffron} />
+          <Text style={[styles.viewVerseText, { color: colors.saffron }]}>Padhein Shloka</Text>
+        </Pressable>
+      )}
+
+      {item.verse && item.showVerse && (
         <View style={styles.verseCardContainer}>
           <VerseCard 
             shloka={item.verse.shloka}
@@ -103,6 +141,9 @@ export default function ChatScreen() {
             verse={item.verse.verse}
             alwaysExpanded={true}
           />
+          <Pressable onPress={() => toggleVerse(item.id)} style={styles.hideVerseBtn}>
+            <Text style={{ color: colors.gray, fontSize: 12 }}>Hide Shloka</Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -122,6 +163,13 @@ export default function ChatScreen() {
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            ListFooterComponent={
+              isTyping ? (
+                <View style={styles.typingContainer}>
+                  <ChatBubble message="Krishna Ji is reflecting..." isKrishna={true} />
+                </View>
+              ) : null
+            }
             ListHeaderComponent={
               <View style={styles.headerContent}>
                 {/* Divine Guidance Card */}
@@ -230,4 +278,29 @@ const styles = StyleSheet.create({
   moodTitle: { fontSize: 14, marginBottom: 10, fontWeight: 'bold' },
   moodGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   divider: { height: 1, marginTop: 20 },
+  viewVerseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginLeft: 12,
+    marginTop: -8,
+    marginBottom: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+    backgroundColor: 'rgba(255, 153, 51, 0.05)',
+  },
+  viewVerseText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  hideVerseBtn: {
+    padding: 8,
+    alignItems: 'center',
+  },
+  typingContainer: {
+    opacity: 0.7,
+  },
 });

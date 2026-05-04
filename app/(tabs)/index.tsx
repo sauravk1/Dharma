@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Platform, Image, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 import { useGitaData } from '@/hooks/useGitaData';
 import { useProgress } from '@/hooks/useProgress';
+import { useStreak } from '@/hooks/useStreak';
 import { useTheme } from '@/context/ThemeContext';
 import { VerseCard } from '@/components/VerseCard';
-import { Sparkles, MessageCircle, Heart, Moon, Sun } from 'lucide-react-native';
+import { Sparkles, MessageCircle, Heart, Play, ChevronRight } from 'lucide-react-native';
 
 const KRISHNA_SAYINGS = [
   "Focus on your work, not the result. Success will follow.",
@@ -21,8 +23,11 @@ const KRISHNA_SAYINGS = [
 ];
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { randomVerse } = useGitaData();
-  const { theme, toggleTheme, colors } = useTheme();
+  const { colors } = useTheme();
+  const { readCount, totalVerses, progressPercentage, lastRead } = useProgress();
+  const { streak, getStreakEmoji } = useStreak();
   const [saying, setSaying] = React.useState("");
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -84,6 +89,44 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
+          {/* Streak & Progress Stats */}
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+              <Text style={styles.statEmoji}>{getStreakEmoji()}</Text>
+              <Text style={[styles.statNumber, { color: colors.royalBlue }]}>{streak}</Text>
+              <Text style={[styles.statLabel, { color: colors.gray }]}>Day Streak</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+              <Text style={styles.statEmoji}>📖</Text>
+              <Text style={[styles.statNumber, { color: colors.royalBlue }]}>{readCount}</Text>
+              <Text style={[styles.statLabel, { color: colors.gray }]}>Verses Read</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+              <Text style={styles.statEmoji}>🏅</Text>
+              <Text style={[styles.statNumber, { color: colors.royalBlue }]}>{Math.round(progressPercentage)}%</Text>
+              <Text style={[styles.statLabel, { color: colors.gray }]}>Complete</Text>
+            </View>
+          </View>
+
+          {/* Continue Reading Card */}
+          {lastRead && (
+            <Pressable 
+              onPress={() => router.push('/(tabs)/explore')}
+              style={[styles.continueCard, { backgroundColor: colors.royalBlue }]}
+            >
+              <View style={styles.continueInfo}>
+                <View style={styles.continueIconCircle}>
+                  <Play size={16} color={colors.royalBlue} fill={colors.royalBlue} />
+                </View>
+                <View>
+                  <Text style={styles.continueLabel}>CONTINUE READING</Text>
+                  <Text style={styles.continueVerse}>Chapter {lastRead.split(':')[0]}, Verse {lastRead.split(':')[1]}</Text>
+                </View>
+              </View>
+              <ChevronRight size={20} color="#FFF" />
+            </Pressable>
+          )}
+
           <View style={styles.gyanSection}>
             <View style={styles.sectionHeader}>
               <Sparkles size={20} color={colors.saffron} />
@@ -116,20 +159,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 10, alignItems: 'center' },
-  themeToggle: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 100,
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
   divineGlow: {
     position: 'absolute',
     top: 50,
@@ -146,12 +175,75 @@ const styles = StyleSheet.create({
   ornamentLine: { width: 40, height: 2, marginHorizontal: 15, opacity: 0.5 },
   mainGreeting: { fontSize: 42, fontWeight: '900', textShadowColor: 'rgba(26, 35, 126, 0.1)', textShadowOffset: { width: 0, height: 4 }, textShadowRadius: 6 },
   devotionalSubtitle: { fontSize: 14, fontWeight: '500', marginTop: 4, fontStyle: 'italic' },
-  altarSection: { alignItems: 'center', marginBottom: 40 },
+  altarSection: { alignItems: 'center', marginBottom: 24 },
   imageFrame: { width: 220, height: 220, borderRadius: 110, padding: 8, shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 10, position: 'relative' },
   sacredImage: { width: '100%', height: '100%', borderRadius: 110, borderWidth: 2, borderColor: '#eee' },
   lotusBadge: { position: 'absolute', bottom: 5, right: 30, backgroundColor: '#E91E63', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#FFF' },
   messageAltar: { marginTop: -20, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, borderWidth: 1, maxWidth: '90%', zIndex: 30 },
   messageText: { fontSize: 14, fontWeight: '700', marginLeft: 10, fontStyle: 'italic', textAlign: 'center' },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 24,
+    paddingHorizontal: 20,
+    width: '100%',
+    maxWidth: 500,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statEmoji: { fontSize: 22, marginBottom: 4 },
+  statNumber: { fontSize: 20, fontWeight: '900' },
+  statLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', marginTop: 2 },
+  continueCard: {
+    width: '90%',
+    maxWidth: 500,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  continueInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  continueIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  continueVerse: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
   gyanSection: { width: '100%', maxWidth: 600 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 2, marginHorizontal: 12 },

@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, Platform, Pressable, FlatList, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 import { useGitaData, Verse } from '@/hooks/useGitaData';
 import { VerseCard } from '@/components/VerseCard';
-import { Search, ChevronRight, ArrowLeft, CheckCircle, BookOpen } from 'lucide-react-native';
+import { AdBanner } from '@/components/AdBanner';
+import { Search, ChevronRight, ArrowLeft, CheckCircle, BookOpen, Plus, Minus } from 'lucide-react-native';
 import { useProgress } from '@/hooks/useProgress';
+import { useSettings } from '@/context/SettingsContext';
 import { useTheme } from '@/context/ThemeContext';
 
 const CHAPTERS = [
@@ -31,7 +34,9 @@ const CHAPTERS = [
 export default function ExploreScreen() {
   const { data } = useGitaData();
   const { progressPercentage, readCount, totalVerses } = useProgress();
+  const { fontSize, updateFontSize } = useSettings();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isReadingMode, setIsReadingMode] = useState(false);
@@ -94,9 +99,11 @@ export default function ExploreScreen() {
                 <Pressable onPress={() => setSelectedChapter(null)} style={styles.backBtn}>
                   <ArrowLeft size={24} color={colors.royalBlue} />
                 </Pressable>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={[styles.headerSubtitle, { color: colors.saffron }]}>Chapter {selectedChapter}</Text>
-                  <Text style={[styles.headerTitle, { color: colors.royalBlue }]}>{CHAPTERS.find(c => c.id === selectedChapter)?.title}</Text>
+                  <Text style={[styles.headerTitle, { color: colors.royalBlue, fontSize: 18 }]} numberOfLines={2}>
+                    {CHAPTERS.find(c => c.id === selectedChapter)?.title}
+                  </Text>
                 </View>
               </View>
               <Pressable 
@@ -125,18 +132,16 @@ export default function ExploreScreen() {
             </View>
           )}
 
-          {!selectedChapter && (
-            <View style={[styles.searchContainer, { backgroundColor: colors.white, borderColor: colors.border }]}>
-              <Search size={20} color={colors.gray} style={styles.searchIcon} />
-              <TextInput 
-                style={[styles.searchInput, { color: colors.royalBlue }]}
-                placeholder="Search in all verses..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={colors.gray}
-              />
-            </View>
-          )}
+          <View style={[styles.searchContainer, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <Search size={20} color={colors.gray} style={styles.searchIcon} />
+            <TextInput 
+              style={[styles.searchInput, { color: colors.royalBlue }]}
+              placeholder={selectedChapter ? "Search in this chapter..." : "Search in all verses..."}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={colors.gray}
+            />
+          </View>
         </View>
       )}
 
@@ -146,12 +151,27 @@ export default function ExploreScreen() {
         onRequestClose={() => setIsReadingMode(false)}
       >
         <View style={[styles.fullscreenContainer, { backgroundColor: colors.sacredSilk }]}>
-          <View style={[styles.readingHeader, { backgroundColor: colors.white, borderBottomColor: colors.border }]}>
+          <View style={[
+            styles.readingHeader, 
+            { 
+              backgroundColor: colors.white, 
+              borderBottomColor: colors.border,
+              paddingTop: Platform.OS === 'ios' ? insets.top : 20 
+            }
+          ]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.readingTitle, { color: colors.royalBlue }]} numberOfLines={1}>
                 Chapter {selectedChapter}: {CHAPTERS.find(c => c.id === selectedChapter)?.title}
               </Text>
-              <Text style={[styles.readingCount, { color: colors.saffron }]}>{filteredVerses.length} Verses in Focus</Text>
+              <View style={styles.fontController}>
+                <Pressable onPress={() => updateFontSize(Math.max(12, fontSize - 1))} style={styles.fontBtn}>
+                  <Minus size={16} color={colors.royalBlue} />
+                </Pressable>
+                <Text style={[styles.fontSizeText, { color: colors.royalBlue }]}>{fontSize}</Text>
+                <Pressable onPress={() => updateFontSize(Math.min(24, fontSize + 1))} style={styles.fontBtn}>
+                  <Plus size={16} color={colors.royalBlue} />
+                </Pressable>
+              </View>
             </View>
             <Pressable 
               onPress={() => setIsReadingMode(false)}
@@ -178,6 +198,7 @@ export default function ExploreScreen() {
             renderItem={renderChapter}
             keyExtractor={item => item.id.toString()}
             contentContainerStyle={styles.listContent}
+            ListFooterComponent={<AdBanner />}
           />
         ) : (
           <FlatList
@@ -205,8 +226,8 @@ const styles = StyleSheet.create({
   progressText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
   headerTitle: { fontSize: 24, fontWeight: 'bold' },
   headerSubtitle: { fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase' },
-  chapterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { marginRight: 16, padding: 4 },
+  chapterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  backBtn: { marginRight: 8, padding: 4 },
   readingModeBtn: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -242,4 +263,21 @@ const styles = StyleSheet.create({
   chapterSummary: { fontSize: 13, marginTop: 2 },
   emptyContainer: { padding: 40, alignItems: 'center' },
   emptyText: { fontSize: 16, textAlign: 'center' },
+  fontController: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 12,
+  },
+  fontBtn: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#F5F5F5',
+  },
+  fontSizeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    minWidth: 20,
+    textAlign: 'center',
+  },
 });

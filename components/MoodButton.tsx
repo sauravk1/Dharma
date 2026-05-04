@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, StyleSheet, Pressable, Platform, useWindowDimensions } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 
 interface MoodButtonProps {
@@ -14,9 +15,16 @@ export const MoodButton: React.FC<MoodButtonProps> = ({ mood, onPress, icon }) =
   const isWeb = Platform.OS === 'web';
   const buttonWidth = width > 800 ? '23%' : '48%';
 
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPress();
+  };
+
   return (
     <Pressable 
-      onPress={onPress}
+      onPress={handlePress}
       style={({ hovered, pressed }) => [
         styles.button,
         { 

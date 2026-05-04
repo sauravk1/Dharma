@@ -69,7 +69,7 @@ export default function TabLayout() {
               fontWeight: 'bold',
             },
             headerRight: () => (
-              <View style={{ marginRight: 15 }}>
+              <View style={{ marginRight: 15, marginTop: Platform.OS === 'web' ? 0 : -8 }}>
                 <ThemeToggle />
               </View>
             ),
