@@ -1,7 +1,7 @@
 import { Tabs, useRouter, usePathname } from 'expo-router';
 import React from 'react';
 import { Platform, View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
-import { Home, BookOpen, MessageCircle, Bookmark, User } from 'lucide-react-native';
+import { Home, BookOpen, MessageCircle, Bookmark, User, Settings } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -27,7 +27,7 @@ export default function TabLayout() {
           { name: 'Krishna Chat', path: '/chat', icon: MessageCircle },
           { name: 'Sampoorna Gita', path: '/explore', icon: BookOpen },
           { name: 'Bookmarks', path: '/bookmarks', icon: Bookmark },
-          { name: 'Developer', path: '/about', icon: User },
+          { name: 'Settings', path: '/settings', icon: Settings },
         ].map((item) => {
           const isActive = pathname === item.path;
           return (
@@ -114,8 +114,14 @@ export default function TabLayout() {
           <Tabs.Screen
             name="about"
             options={{
-              title: 'Developer',
-              tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+              href: null, // This hides the tab completely from the bar
+            }}
+          />
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: 'Settings',
+              tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
             }}
           />
         </Tabs>

@@ -70,8 +70,8 @@ export default function ExploreScreen() {
         <Text style={styles.chapterNumberText}>{item.id}</Text>
       </View>
       <View style={styles.chapterInfo}>
-        <Text style={[styles.chapterTitle, { color: colors.royalBlue }]}>{item.title}</Text>
-        <Text style={[styles.chapterSummary, { color: colors.gray }]} numberOfLines={2}>{item.summary}</Text>
+        <Text style={[styles.chapterTitle, { color: colors.royalBlue, fontSize: Math.max(16, fontSize * 1.1) }]}>{item.title}</Text>
+        <Text style={[styles.chapterSummary, { color: colors.gray, fontSize: Math.max(12, fontSize * 0.8) }]} numberOfLines={2}>{item.summary}</Text>
       </View>
       <ChevronRight size={20} color={colors.gray} />
     </Pressable>

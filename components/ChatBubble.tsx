@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { useSettings } from '@/context/SettingsContext';
 import { Sparkles } from 'lucide-react-native';
 
 interface ChatBubbleProps {
@@ -10,6 +11,7 @@ interface ChatBubbleProps {
 
 export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isKrishna = true }) => {
   const { colors } = useTheme();
+  const { fontSize } = useSettings();
 
   return (
     <View style={[styles.container, isKrishna ? styles.krishnaContainer : styles.userContainer]}>
@@ -30,7 +32,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isKrishna = tru
         {isKrishna && (
           <Sparkles size={12} color={colors.saffron} style={styles.sparkleIcon} />
         )}
-        <Text style={[styles.text, isKrishna ? { color: colors.royalBlue } : { color: '#FFF' }]}>
+        <Text style={[styles.text, isKrishna ? { color: colors.royalBlue } : { color: '#FFF' }, { fontSize, lineHeight: fontSize * 1.5 }]}>
           {message}
         </Text>
       </View>

@@ -8,6 +8,7 @@ interface ProgressContextType {
   progressPercentage: number;
   totalVerses: number;
   readCount: number;
+  clearProgress: () => Promise<void>;
 }
 
 const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
@@ -46,6 +47,13 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const progressPercentage = (readVerses.length / TOTAL_VERSES) * 100;
 
+  const clearProgress = async () => {
+    setReadVerses([]);
+    setLastRead(null);
+    await storage.removeItem('readHistory');
+    await storage.removeItem('last_read_verse');
+  };
+
   return (
     <ProgressContext.Provider 
       value={{ 
@@ -54,7 +62,8 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleProgress, 
         progressPercentage, 
         totalVerses: TOTAL_VERSES, 
-        readCount: readVerses.length 
+        readCount: readVerses.length,
+        clearProgress
       }}
     >
       {children}

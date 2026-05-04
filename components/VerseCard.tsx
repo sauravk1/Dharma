@@ -31,13 +31,16 @@ export const VerseCard: React.FC<VerseCardProps> = ({
   const [isExpanded, setIsExpanded] = React.useState(alwaysExpanded);
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { readVerses, toggleProgress } = useProgress();
-  const { fontSize } = useSettings();
+  const { fontSize, hapticsEnabled, language } = useSettings();
   const { colors } = useTheme();
 
   // Use the wisdom engine to generate bilingual advice
   const advice = React.useMemo(() => {
-    return getDivineAdvice({ shloka, translation, english, connection: originalConnection, chapter, verse, mood: '' });
-  }, [shloka, translation, english, originalConnection, chapter, verse]);
+    const rawAdvice = getDivineAdvice({ shloka, translation, english, connection: originalConnection, chapter, verse, mood: '' });
+    if (language === 'hi') return { ...rawAdvice, english: '' };
+    if (language === 'en') return { ...rawAdvice, hindi: '' };
+    return rawAdvice;
+  }, [shloka, translation, english, originalConnection, chapter, verse, language]);
 
   const verseId = `${chapter}:${verse}`;
   const bookmarked = isBookmarked(verseId);
@@ -47,20 +50,20 @@ export const VerseCard: React.FC<VerseCardProps> = ({
     if (alwaysExpanded) return;
     const nextState = !isExpanded;
     setIsExpanded(nextState);
-    if (nextState && Platform.OS !== 'web') {
+    if (nextState && Platform.OS !== 'web' && hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
   const handleMarkRead = () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && hapticsEnabled) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     toggleProgress(verseId);
   };
 
   const handleShare = async () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     try {
@@ -126,17 +129,25 @@ export const VerseCard: React.FC<VerseCardProps> = ({
       {(isExpanded || alwaysExpanded) && (
         <Animated.View entering={FadeInDown.duration(400)}>
           <View style={styles.contentSection}>
-            <Text style={styles.sectionLabel}>English Meaning</Text>
-            <Text style={[styles.meaningText, { color: colors.text, fontSize: fontSize }]}>
-              {english}
-            </Text>
+            {(language === 'en' || language === 'both') && (
+              <>
+                <Text style={styles.sectionLabel}>English Meaning</Text>
+                <Text style={[styles.meaningText, { color: colors.text, fontSize: fontSize }]}>
+                  {english}
+                </Text>
+              </>
+            )}
           </View>
 
           <View style={styles.contentSection}>
-            <Text style={styles.sectionLabel}>Hindi Anuvadan</Text>
-            <Text style={[styles.meaningText, { color: colors.text, fontSize: fontSize }]}>
-              {translation}
-            </Text>
+            {(language === 'hi' || language === 'both') && (
+              <>
+                <Text style={styles.sectionLabel}>Hindi Anuvadan</Text>
+                <Text style={[styles.meaningText, { color: colors.text, fontSize: fontSize }]}>
+                  {translation}
+                </Text>
+              </>
+            )}
           </View>
 
           <View style={[styles.adviceCard, { backgroundColor: colors.primary + '15' }]}>
@@ -145,15 +156,21 @@ export const VerseCard: React.FC<VerseCardProps> = ({
               <Text style={[styles.adviceTitle, { color: colors.primary }]}>Krishna's Advice</Text>
             </View>
             
-            <Text style={[styles.adviceTextHi, { color: colors.text, fontSize: fontSize + 1 }]}>
-              {advice.hindi}
-            </Text>
+            {(language === 'hi' || language === 'both') && advice?.hindi ? (
+              <Text style={[styles.adviceTextHi, { color: colors.text, fontSize: fontSize + 1, marginBottom: (language === 'both' && advice?.english) ? 12 : 0 }]}>
+                {advice.hindi}
+              </Text>
+            ) : null}
             
-            <View style={[styles.adviceDivider, { backgroundColor: colors.primary + '30' }]} />
+            {language === 'both' && advice?.hindi && advice?.english && (
+              <View style={[styles.adviceDivider, { backgroundColor: colors.primary + '30' }]} />
+            )}
             
-            <Text style={[styles.adviceTextEn, { color: colors.text, fontSize: fontSize }]}>
-              {advice.english}
-            </Text>
+            {(language === 'en' || language === 'both') && advice?.english ? (
+              <Text style={[styles.adviceTextEn, { color: colors.text, fontSize: fontSize }]}>
+                {advice.english}
+              </Text>
+            ) : null}
           </View>
 
           <TouchableOpacity 

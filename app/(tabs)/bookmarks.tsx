@@ -7,11 +7,13 @@ import { VerseCard } from '@/components/VerseCard';
 import { AdBanner } from '@/components/AdBanner';
 import { Bookmark } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function BookmarksScreen() {
   const { data } = useGitaData();
   const { bookmarks } = useBookmarks();
   const { colors } = useTheme();
+  const { fontSize } = useSettings();
 
   const bookmarkedVerses = useMemo(() => {
     return data.filter(v => bookmarks.includes(`${v.chapter}:${v.verse}`));
@@ -20,8 +22,8 @@ export default function BookmarksScreen() {
   return (
     <ResponsiveContainer scrollable={false}>
       <View style={[styles.header, { backgroundColor: colors.cream }]}>
-        <Text style={[styles.headerTitle, { color: colors.royalBlue }]}>Saved Gyan</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.saffron }]}>{bookmarkedVerses.length} verses bookmarked</Text>
+        <Text style={[styles.headerTitle, { color: colors.royalBlue, fontSize: fontSize * 1.5 }]}>Saved Gyan</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.saffron, fontSize: fontSize * 0.8 }]}>{bookmarkedVerses.length} verses bookmarked</Text>
       </View>
 
       <View style={{ flex: 1 }}>
@@ -45,8 +47,8 @@ export default function BookmarksScreen() {
         ) : (
           <View style={styles.emptyContainer}>
             <Bookmark size={60} color={colors.gray} style={{ opacity: 0.3, marginBottom: 20 }} />
-            <Text style={[styles.emptyTitle, { color: colors.royalBlue }]}>No bookmarks yet</Text>
-            <Text style={[styles.emptyText, { color: colors.gray }]}>
+            <Text style={[styles.emptyTitle, { color: colors.royalBlue, fontSize: fontSize * 1.2 }]}>No bookmarks yet</Text>
+            <Text style={[styles.emptyText, { color: colors.gray, fontSize: fontSize, lineHeight: fontSize * 1.4 }]}>
               Gita ke shlokas ko bookmark karein taaki aap unhe baad mein padh sakein.
             </Text>
           </View>

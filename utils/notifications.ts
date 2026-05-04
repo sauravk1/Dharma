@@ -1,25 +1,23 @@
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 // Configure how notifications are displayed when the app is foregrounded
 Notifications.setNotificationHandler({
-  handleNotification: async (_notification: any) => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  } as any),
-});
+  handleNotification: async () => {
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    };
+  },
+} as any);
 
 export async function registerForPushNotificationsAsync() {
-  let token;
+  if (Platform.OS === 'web') return null;
 
-  if (Platform.OS === 'web') {
-    return null;
-  }
-
-  if (Device.isDevice) {
+  if (Device?.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
@@ -27,69 +25,66 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      console.warn('Failed to get push token for push notification!');
       return null;
     }
-    
+
     try {
-      // Get the project ID from expo-constants
-      const expoConfig = (Constants as any)?.expoConfig;
-      const easConfig = (Constants as any)?.easConfig;
-      
-      const projectId = 
-        expoConfig?.extra?.eas?.projectId ?? 
-        easConfig?.projectId;
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ??
+        Constants?.easConfig?.projectId;
 
       if (!projectId) {
-        console.log('Project ID not found in app.json. Push notifications might not work in development.');
+        console.warn('No Project ID found for push notifications');
+        return null;
       }
 
-      const tokenData = await Notifications.getExpoPushTokenAsync({ 
-        ...(projectId ? { projectId } : {}) 
-      } as any);
-      token = tokenData.data;
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      return token;
     } catch (e) {
-      console.log('Error getting push token:', e);
+      console.error('Push Token Error:', e);
     }
   } else {
     console.log('Must use physical device for Push Notifications');
   }
 
   if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('daily-verses', {
-      name: 'Daily Verses',
-      importance: Notifications.AndroidImportance.MAX,
+    await Notifications.setNotificationChannelAsync('daily-wisdom', {
+      name: 'Daily Wisdom',
+      importance: (Notifications as any).AndroidImportance?.HIGH ?? 4,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
+      lightColor: '#FF9800',
+    } as any);
   }
 
-  return token;
+  return null;
 }
 
 export async function scheduleDailyVerseNotification(verse: string, advice: string) {
   if (Platform.OS === 'web') return;
 
   try {
-    // Cancel all existing notifications first to avoid duplicates
+    // 1. Cancel existing to avoid duplicates
     await Notifications.cancelAllScheduledNotificationsAsync();
 
-    // Schedule for 7:00 AM every day
+    // 2. Schedule for 7:00 AM every day
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Krishna's Morning Wisdom 🪷",
         body: advice,
-        data: { screen: 'explore' },
+        sound: 'default',
+        android: {
+          channelId: 'daily-wisdom',
+        },
       },
       trigger: {
         hour: 7,
         minute: 0,
         repeats: true,
-      } as Notifications.NotificationTriggerInput,
-    });
-    
-    console.log('Daily notification scheduled for 7:00 AM');
+      },
+    } as any);
+    console.log('Notification scheduled for 7:00 AM');
   } catch (error) {
-    console.error('Error scheduling notification:', error);
+    console.error('Error scheduling daily notification:', error);
   }
 }

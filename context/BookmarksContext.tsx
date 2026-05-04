@@ -5,6 +5,7 @@ interface BookmarksContextType {
   bookmarks: string[];
   toggleBookmark: (id: string) => Promise<void>;
   isBookmarked: (id: string) => boolean;
+  clearBookmarks: () => Promise<void>;
 }
 
 const BookmarksContext = createContext<BookmarksContextType | undefined>(undefined);
@@ -38,8 +39,13 @@ export const BookmarksProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const isBookmarked = (id: string) => bookmarks.includes(id);
 
+  const clearBookmarks = async () => {
+    setBookmarks([]);
+    await storage.removeItem('bookmarks');
+  };
+
   return (
-    <BookmarksContext.Provider value={{ bookmarks, toggleBookmark, isBookmarked }}>
+    <BookmarksContext.Provider value={{ bookmarks, toggleBookmark, isBookmarked, clearBookmarks }}>
       {children}
     </BookmarksContext.Provider>
   );

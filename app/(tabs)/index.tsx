@@ -6,6 +6,7 @@ import { useGitaData } from '@/hooks/useGitaData';
 import { useProgress } from '@/hooks/useProgress';
 import { useStreak } from '@/hooks/useStreak';
 import { useTheme } from '@/context/ThemeContext';
+import { useSettings } from '@/context/SettingsContext';
 import { VerseCard } from '@/components/VerseCard';
 import { Sparkles, MessageCircle, Heart, Play, ChevronRight } from 'lucide-react-native';
 
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { randomVerse } = useGitaData();
   const { colors } = useTheme();
+  const { fontSize } = useSettings();
   const { readCount, totalVerses, progressPercentage, lastRead } = useProgress();
   const { streak, getStreakEmoji } = useStreak();
   const [saying, setSaying] = React.useState("");
@@ -66,13 +68,13 @@ export default function HomeScreen() {
         
         <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.devotionalHeader}>
-            <Text style={[styles.sanskritMantra, { color: colors.saffron }]}>॥ श्री कृष्णः शरणं मम ॥</Text>
+            <Text style={[styles.sanskritMantra, { color: colors.saffron, fontSize: fontSize * 0.9 }]}>॥ श्री कृष्णः शरणं मम ॥</Text>
             <View style={styles.titleContainer}>
               <View style={[styles.ornamentLine, { backgroundColor: colors.saffron }]} />
-              <Text style={[styles.mainGreeting, { color: colors.royalBlue }]}>Radhe Radhe</Text>
+              <Text style={[styles.mainGreeting, { color: colors.royalBlue, fontSize: fontSize * 2.5 }]}>Radhe Radhe</Text>
               <View style={[styles.ornamentLine, { backgroundColor: colors.saffron }]} />
             </View>
-            <Text style={[styles.devotionalSubtitle, { color: colors.gray }]}>Universal Companion for Modern Living</Text>
+            <Text style={[styles.devotionalSubtitle, { color: colors.gray, fontSize: fontSize * 0.85 }]}>Universal Companion for Modern Living</Text>
           </View>
 
           <Animated.View style={[styles.altarSection, { transform: [{ translateY: floatAnim }] }]}>
@@ -85,7 +87,7 @@ export default function HomeScreen() {
             
             <View style={[styles.messageAltar, { backgroundColor: colors.white, borderColor: colors.border }]}>
               <MessageCircle size={18} color={colors.saffron} />
-              <Text style={[styles.messageText, { color: colors.royalBlue }]}>"{saying}"</Text>
+              <Text style={[styles.messageText, { color: colors.royalBlue, fontSize: fontSize * 0.9 }]}>"{saying}"</Text>
             </View>
           </Animated.View>
 
@@ -149,7 +151,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.footer}>
-            <Text style={[styles.footerBlessing, { color: colors.royalBlue }]}>May Lord Krishna guide your path today and always.</Text>
+            <Text style={[styles.footerBlessing, { color: colors.royalBlue, fontSize: fontSize * 0.85 }]}>May Lord Krishna guide your path today and always.</Text>
           </View>
         </Animated.View>
       </View>
