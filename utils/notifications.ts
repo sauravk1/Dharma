@@ -67,28 +67,28 @@ export async function registerForPushNotificationsAsync() {
   return token;
 }
 
-export async function scheduleDailyVerseNotification(verse: string, translation: string) {
+export async function scheduleDailyVerseNotification(verse: string, advice: string) {
   if (Platform.OS === 'web') return;
 
   try {
     // Cancel all existing notifications first to avoid duplicates
     await Notifications.cancelAllScheduledNotificationsAsync();
 
-    // Schedule for 9:00 AM every day
+    // Schedule for 7:00 AM every day
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Daily Gita Wisdom 🕉️",
-        body: `"${verse.length > 50 ? verse.substring(0, 50) + '...' : verse}"\n\n${translation}`,
+        title: "Krishna's Morning Wisdom 🪷",
+        body: advice,
         data: { screen: 'explore' },
       },
       trigger: {
-        hour: 9,
+        hour: 7,
         minute: 0,
         repeats: true,
       } as Notifications.NotificationTriggerInput,
     });
     
-    console.log('Daily notification scheduled for 9:00 AM');
+    console.log('Daily notification scheduled for 7:00 AM');
   } catch (error) {
     console.error('Error scheduling notification:', error);
   }

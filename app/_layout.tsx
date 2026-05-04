@@ -8,6 +8,7 @@ import { ProgressProvider } from '@/context/ProgressContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { registerForPushNotificationsAsync, scheduleDailyVerseNotification } from '@/utils/notifications';
+import { getDivineAdvice } from '@/utils/wisdom';
 import gitaData from '@/assets/gita_full.json';
 
 const ONBOARDING_KEY = 'dharma_onboarding_done';
@@ -32,7 +33,9 @@ function RootLayoutContent() {
       if (token) {
         const randomIndex = Math.floor(Math.random() * gitaData.length);
         const verse = gitaData[randomIndex];
-        await scheduleDailyVerseNotification(verse.shloka, verse.translation);
+        const advice = getDivineAdvice(verse as any);
+        // Use Hindi advice for a more traditional morning feel
+        await scheduleDailyVerseNotification(verse.shloka, advice.hindi);
       }
     }
     init();
